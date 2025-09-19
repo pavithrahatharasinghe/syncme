@@ -1,0 +1,181 @@
+.App {
+  text-align: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.App-header {
+  background-color: #1db954;
+  padding: 2rem;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.App-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+.App-header p {
+  margin: 0.5rem 0 0 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.App-main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem 2rem;
+}
+
+.section {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.section h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.section h3 {
+  color: #555;
+  font-size: 1.3rem;
+}
+
+.input-group {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.folder-input,
+.playlist-input {
+  flex: 1;
+  min-width: 300px;
+  padding: 12px 16px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.folder-input:focus,
+.playlist-input:focus {
+  outline: none;
+  border-color: #1db954;
+}
+
+.auth-button,
+.scan-button,
+.create-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.auth-button {
+  background-color: #1db954;
+  color: white;
+}
+
+.auth-button:hover:not(:disabled) {
+  background-color: #1ed760;
+}
+
+.auth-button.authenticated {
+  background-color: #4caf50;
+}
+
+.scan-button {
+  background-color: #2196f3;
+  color: white;
+}
+
+.scan-button:hover:not(:disabled) {
+  background-color: #0b7dda;
+}
+
+.create-button {
+  background-color: #ff9800;
+  color: white;
+}
+
+.create-button:hover:not(:disabled) {
+  background-color: #f57c00;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message {
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  font-weight: 500;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.music-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.music-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.music-item:last-child {
+  border-bottom: none;
+}
+
+.music-item strong {
+  color: #333;
+}
+
+.music-item small {
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .App-main {
+    padding: 0 1rem 1rem;
+  }
+  
+  .input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .folder-input,
+  .playlist-input {
+    min-width: auto;
+  }
+}
