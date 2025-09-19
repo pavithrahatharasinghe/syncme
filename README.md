@@ -10,6 +10,12 @@ A full-stack application that allows you to scan local music folders and create 
 - 📝 Create Spotify playlists from local music collections
 - 🔍 Automatically search and match songs on Spotify
 - 🌐 Clean and responsive web interface
+- 🆕 **NEW:** Compare local music with existing Spotify playlists
+- 🆕 **NEW:** Update existing Spotify playlists with new tracks
+- 🆕 **NEW:** Enhanced track matching with multiple search strategies
+- 🆕 **NEW:** Playlist management and visualization
+- 🆕 **NEW:** Confidence scoring for track matches
+- 🆕 **NEW:** Tabbed interface for better user experience
 
 ## Tech Stack
 
@@ -122,7 +128,33 @@ A full-stack application that allows you to scan local music folders and create 
 3. **Authenticate with Spotify** by clicking the "Login to Spotify" button
 4. **Enter a folder path** containing your music files
 5. **Scan the folder** to discover music files
-6. **Create a playlist** by entering a name and clicking "Create Playlist"
+6. **Choose your action** using the enhanced tabbed interface:
+   - **Create New Playlist**: Enter a name and create a new Spotify playlist
+   - **Compare & Update**: Compare your local music with existing Spotify playlists and update them
+   - **Manage Playlists**: View and manage your existing Spotify playlists
+
+### Enhanced Workflow Options
+
+#### Creating New Playlists
+- Scan your local music folder
+- Use the "Create New Playlist" tab
+- Enter a playlist name and create it on Spotify
+- Enhanced matching algorithms provide better track discovery
+
+#### Comparing and Updating Playlists
+- Select an existing Spotify playlist from the dropdown
+- Compare it with your local music collection
+- View detailed comparison results showing:
+  - Tracks already in the playlist
+  - New tracks that can be added
+  - Local tracks not found on Spotify
+  - Tracks only in the Spotify playlist
+- Add new tracks to the existing playlist with one click
+
+#### Managing Playlists
+- View all your Spotify playlists in a visual grid
+- See playlist details including track counts and owners
+- Quick access to open playlists in Spotify
 
 ## API Endpoints
 
@@ -132,6 +164,10 @@ A full-stack application that allows you to scan local music folders and create 
 - `GET /callback` - Handles Spotify OAuth callback
 - `POST /api/scan-folder` - Scans a local folder for music files
 - `POST /api/create-playlist` - Creates a Spotify playlist from songs
+- `GET /api/playlists` - 🆕 **NEW:** Fetches user's Spotify playlists
+- `GET /api/playlists/:playlistId/tracks` - 🆕 **NEW:** Gets tracks from a specific playlist
+- `POST /api/compare-playlist` - 🆕 **NEW:** Compares local songs with a Spotify playlist
+- `POST /api/update-playlist` - 🆕 **NEW:** Updates an existing Spotify playlist
 - `GET /health` - Health check endpoint
 
 ### Request/Response Examples
@@ -160,6 +196,41 @@ Content-Type: application/json
       "album": "Album Name"
     }
   ]
+}
+```
+
+#### Compare Playlist (NEW)
+```bash
+POST /api/compare-playlist
+Content-Type: application/json
+
+{
+  "playlistId": "spotify_playlist_id",
+  "songs": [
+    {
+      "title": "Song Title",
+      "artist": "Artist Name",
+      "album": "Album Name"
+    }
+  ]
+}
+```
+
+#### Update Playlist (NEW)
+```bash
+POST /api/update-playlist
+Content-Type: application/json
+
+{
+  "playlistId": "spotify_playlist_id",
+  "songsToAdd": [
+    {
+      "title": "New Song",
+      "artist": "Artist Name",
+      "album": "Album Name"
+    }
+  ],
+  "songsToRemove": []
 }
 ```
 
