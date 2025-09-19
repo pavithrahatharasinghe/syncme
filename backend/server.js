@@ -90,7 +90,130 @@ app.post('/api/scan-folder', async (req, res) => {
 // API endpoint to get user's existing Spotify playlists
 app.get('/api/playlists', async (req, res) => {
   if (!accessToken) {
-    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+    // Return mock data for demo purposes
+    const mockPlaylists = [
+      {
+        id: 'playlist1',
+        name: 'My Favorites',
+        description: 'All my favorite songs',
+        trackCount: 45,
+        url: 'https://open.spotify.com/playlist/playlist1',
+        image: 'https://via.placeholder.com/150/1db954/ffffff?text=Favorites',
+        owner: 'john_doe',
+        public: true
+      },
+      {
+        id: 'playlist2',
+        name: 'Rock Classics',
+        description: 'Best rock songs from the 80s and 90s',
+        trackCount: 87,
+        url: 'https://open.spotify.com/playlist/playlist2',
+        image: 'https://via.placeholder.com/150/ff6b6b/ffffff?text=Rock',
+        owner: 'john_doe',
+        public: false
+      },
+      {
+        id: 'playlist3',
+        name: 'Chill Vibes',
+        description: 'Relaxing music for work and study',
+        trackCount: 32,
+        url: 'https://open.spotify.com/playlist/playlist3',
+        image: 'https://via.placeholder.com/150/4ecdc4/ffffff?text=Chill',
+        owner: 'john_doe',
+        public: true
+      },
+      {
+        id: 'playlist4',
+        name: 'Workout Mix',
+        description: 'High energy songs for gym sessions',
+        trackCount: 67,
+        url: 'https://open.spotify.com/playlist/playlist4',
+        image: 'https://via.placeholder.com/150/ff8c00/ffffff?text=Workout',
+        owner: 'john_doe',
+        public: false
+      },
+      {
+        id: 'playlist5',
+        name: 'Jazz Collection',
+        description: 'Classic and modern jazz tracks',
+        trackCount: 123,
+        url: 'https://open.spotify.com/playlist/playlist5',
+        image: 'https://via.placeholder.com/150/9b59b6/ffffff?text=Jazz',
+        owner: 'music_lover',
+        public: true
+      },
+      {
+        id: 'playlist6',
+        name: 'Summer Hits 2023',
+        description: 'Top summer songs of 2023',
+        trackCount: 54,
+        url: 'https://open.spotify.com/playlist/playlist6',
+        image: 'https://via.placeholder.com/150/f39c12/ffffff?text=Summer',
+        owner: 'music_lover',
+        public: true
+      },
+      {
+        id: 'playlist7',
+        name: 'Indie Folk',
+        description: 'Beautiful indie folk songs',
+        trackCount: 78,
+        url: 'https://open.spotify.com/playlist/playlist7',
+        image: 'https://via.placeholder.com/150/27ae60/ffffff?text=Folk',
+        owner: 'indie_fan',
+        public: false
+      },
+      {
+        id: 'playlist8',
+        name: 'Electronic Dreams',
+        description: 'Electronic music for late nights',
+        trackCount: 99,
+        url: 'https://open.spotify.com/playlist/playlist8',
+        image: 'https://via.placeholder.com/150/3498db/ffffff?text=Electronic',
+        owner: 'techno_head',
+        public: true
+      },
+      {
+        id: 'playlist9',
+        name: 'Classical Masterpieces',
+        description: 'Greatest classical compositions',
+        trackCount: 156,
+        url: 'https://open.spotify.com/playlist/playlist9',
+        image: 'https://via.placeholder.com/150/8e44ad/ffffff?text=Classical',
+        owner: 'classic_music',
+        public: true
+      },
+      {
+        id: 'playlist10',
+        name: 'Country Roads',
+        description: 'Best country music collection',
+        trackCount: 89,
+        url: 'https://open.spotify.com/playlist/playlist10',
+        image: 'https://via.placeholder.com/150/d35400/ffffff?text=Country',
+        owner: 'country_fan',
+        public: false
+      },
+      {
+        id: 'playlist11',
+        name: 'Hip Hop Essentials',
+        description: 'Must-have hip hop tracks',
+        trackCount: 76,
+        url: 'https://open.spotify.com/playlist/playlist11',
+        image: 'https://via.placeholder.com/150/2c3e50/ffffff?text=HipHop',
+        owner: 'rap_master',
+        public: true
+      },
+      {
+        id: 'playlist12',
+        name: 'Acoustic Sessions',
+        description: 'Unplugged and acoustic versions',
+        trackCount: 43,
+        url: 'https://open.spotify.com/playlist/playlist12',
+        image: 'https://via.placeholder.com/150/95a5a6/ffffff?text=Acoustic',
+        owner: 'acoustic_lover',
+        public: false
+      }
+    ];
+    return res.json({ playlists: mockPlaylists });
   }
 
   try {

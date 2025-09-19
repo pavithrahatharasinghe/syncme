@@ -329,13 +329,449 @@ button:disabled {
 .playlist-link {
   display: inline-block;
   margin-top: 0.5rem;
-  color: #1db954;
+  padding: 0.5rem 1rem;
+  background-color: #1db954;
+  color: white;
   text-decoration: none;
-  font-weight: 500;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
 }
 
 .playlist-link:hover {
-  text-decoration: underline;
+  background-color: #1ed760;
+}
+
+/* Enhanced Playlist Management */
+.playlist-management {
+  margin-top: 1rem;
+}
+
+.playlist-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.search-controls {
+  flex: 1;
+  min-width: 200px;
+}
+
+.playlist-search {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.playlist-search:focus {
+  outline: none;
+  border-color: #1db954;
+  box-shadow: 0 0 0 2px rgba(29, 185, 84, 0.2);
+}
+
+.sort-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.sort-select {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: white;
+}
+
+.sort-order-btn {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 1.2rem;
+  min-width: 40px;
+  transition: all 0.2s ease;
+}
+
+.sort-order-btn:hover {
+  background: #f5f5f5;
+  border-color: #1db954;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.selection-count {
+  font-size: 0.9rem;
+  color: #666;
+  background: #e9ecef;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+}
+
+.results-info {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #666;
+  text-align: center;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.playlist-table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+
+.playlist-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.playlist-table th,
+.playlist-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.playlist-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.playlist-table tr:hover {
+  background: #f8f9fa;
+}
+
+.playlist-table tr.selected {
+  background: #e3f2fd;
+}
+
+.playlist-image-cell {
+  width: 60px;
+}
+
+.playlist-thumbnail {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.playlist-thumbnail-placeholder {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #999;
+}
+
+.playlist-name-cell {
+  max-width: 200px;
+}
+
+.playlist-name-cell strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.playlist-description {
+  font-size: 0.8rem;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-count {
+  font-weight: 600;
+  color: #1db954;
+}
+
+.owner {
+  color: #666;
+}
+
+.public-status {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.public-status.public {
+  background: #d4edda;
+  color: #155724;
+}
+
+.public-status.private {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.playlist-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.select-for-compare-btn,
+.open-spotify-btn {
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.select-for-compare-btn {
+  background: #007bff;
+  color: white;
+}
+
+.select-for-compare-btn:hover {
+  background: #0056b3;
+}
+
+.open-spotify-btn {
+  background: #1db954;
+  color: white;
+}
+
+.open-spotify-btn:hover {
+  background: #1ed760;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.pagination-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #1db954;
+  color: white;
+  border-color: #1db954;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.selected-playlist-info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #e8f5e8;
+  border-radius: 8px;
+  border-left: 4px solid #1db954;
+}
+
+.selected-playlist-card {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.selected-playlist-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.selected-playlist-details {
+  flex: 1;
+}
+
+.selected-playlist-details strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #333;
+}
+
+.selected-playlist-details p {
+  margin: 0.25rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.selected-playlist-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.go-to-compare-btn,
+.clear-selection-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.go-to-compare-btn {
+  background: #1db954;
+  color: white;
+}
+
+.go-to-compare-btn:hover {
+  background: #1ed760;
+}
+
+.clear-selection-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.clear-selection-btn:hover {
+  background: #545b62;
+}
+
+.no-playlists {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.select-all-checkbox,
+.select-checkbox {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
+/* Enhanced Compare Tab */
+.currently-selected-info {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #e8f5e8;
+  border-radius: 8px;
+  border-left: 4px solid #1db954;
+}
+
+.current-selection-card {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.current-selection-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.current-selection-details {
+  flex: 1;
+}
+
+.current-selection-details strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #333;
+}
+
+.current-selection-details p {
+  margin: 0.25rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.selection-description {
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.change-selection-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #6c757d;
+  border-radius: 4px;
+  background: white;
+  color: #6c757d;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.change-selection-btn:hover {
+  background: #6c757d;
+  color: white;
+}
+
+.compare-requirements {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.compare-requirements p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.compare-requirements ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.compare-requirements li {
+  margin: 0.25rem 0;
+  color: #666;
+}
+
+.track-item.not-found {
+  background: #fff3cd;
+  border-left: 3px solid #ffc107;
 }
 
 .message {
@@ -422,5 +858,52 @@ button:disabled {
 
   .playlist-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Mobile playlist management */
+  .playlist-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .sort-controls {
+    justify-content: space-between;
+  }
+
+  .bulk-actions {
+    justify-content: center;
+  }
+
+  .playlist-table-container {
+    overflow-x: auto;
+  }
+
+  .playlist-table {
+    min-width: 600px;
+  }
+
+  .playlist-table th,
+  .playlist-table td {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .playlist-name-cell {
+    max-width: 150px;
+  }
+
+  .selected-playlist-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .selected-playlist-actions {
+    justify-content: center;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
 }
