@@ -6,18 +6,23 @@
     "setup": "npm run install:backend && npm run install:frontend && npm run setup:env",
     "install:backend": "cd backend && npm install",
     "install:frontend": "cd frontend && npm install",
-    "setup:env": "cd backend && cp -n .env.example .env || true",
+    "setup:env": "node backend/setup-env.js",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm start",
     "start": "npm run dev",
     "build": "cd frontend && npm run build",
     "test": "concurrently \"cd backend && npm test\" \"cd frontend && npm test\""
-  },
+  },  
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
-  "keywords": ["music", "spotify", "sync", "playlist"],
+  "keywords": [
+    "music",
+    "spotify",
+    "sync",
+    "playlist"
+  ],
   "author": "",
   "license": "ISC"
 }
