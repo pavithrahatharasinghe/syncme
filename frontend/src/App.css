@@ -114,9 +114,228 @@
   background-color: #f57c00;
 }
 
+.compare-button {
+  background-color: #9c27b0;
+  color: white;
+}
+
+.compare-button:hover:not(:disabled) {
+  background-color: #7b1fa2;
+}
+
+.update-button {
+  background-color: #4caf50;
+  color: white;
+  margin-top: 1rem;
+}
+
+.update-button:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.refresh-button {
+  background-color: #607d8b;
+  color: white;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background-color: #546e7a;
+}
+
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 1rem;
+}
+
+.tab {
+  background: none;
+  border: none;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  font-size: 1rem;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.tab.active {
+  border-bottom-color: #1db954;
+  color: #1db954;
+  font-weight: 600;
+}
+
+.tab-content {
+  padding: 1rem 0;
+}
+
+/* Playlist selector */
+.playlist-selector {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.playlist-select {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* Comparison results */
+.comparison-results {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.comparison-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.summary-item {
+  text-align: center;
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.summary-item .count {
+  display: block;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1db954;
+}
+
+.summary-item .label {
+  display: block;
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.update-section {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+/* Track lists */
+.track-list {
+  margin-top: 1rem;
+}
+
+.track-item {
+  padding: 0.75rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  background: white;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+
+.track-item:last-child {
+  border-bottom: none;
+}
+
+.track-item strong {
+  color: #333;
+}
+
+.track-item small {
+  color: #666;
+}
+
+.confidence {
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  margin-left: 0.5rem;
+}
+
+.confidence.high {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.confidence.medium {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.confidence.low {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Playlist grid */
+.playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.playlist-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.playlist-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.playlist-image {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.playlist-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.playlist-info p {
+  margin: 0.25rem 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.playlist-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #1db954;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.playlist-link:hover {
+  text-decoration: underline;
 }
 
 .message {
@@ -169,13 +388,39 @@ button:disabled {
     padding: 0 1rem 1rem;
   }
   
-  .input-group {
+  .input-group,
+  .playlist-selector {
     flex-direction: column;
     align-items: stretch;
   }
   
   .folder-input,
-  .playlist-input {
+  .playlist-input,
+  .playlist-select {
     min-width: auto;
+    margin-bottom: 0.5rem;
+  }
+
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tab {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #ddd;
+    border-right: none;
+  }
+
+  .tab.active {
+    border-bottom-color: #1db954;
+    border-right-color: transparent;
+  }
+
+  .comparison-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .playlist-grid {
+    grid-template-columns: 1fr;
   }
 }

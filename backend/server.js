@@ -87,6 +87,80 @@ app.post('/api/scan-folder', async (req, res) => {
   }
 });
 
+// API endpoint to get user's existing Spotify playlists
+app.get('/api/playlists', async (req, res) => {
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+
+  try {
+    const playlists = await getUserPlaylists();
+    res.json({ playlists });
+  } catch (error) {
+    console.error('Error fetching playlists:', error.message);
+    res.status(500).json({ error: 'Failed to fetch playlists: ' + error.message });
+  }
+});
+
+// API endpoint to get tracks from a specific playlist
+app.get('/api/playlists/:playlistId/tracks', async (req, res) => {
+  const { playlistId } = req.params;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+
+  try {
+    const tracks = await getPlaylistTracks(playlistId);
+    res.json({ tracks });
+  } catch (error) {
+    console.error('Error fetching playlist tracks:', error.message);
+    res.status(500).json({ error: 'Failed to fetch playlist tracks: ' + error.message });
+  }
+});
+
+// API endpoint to compare local songs with a Spotify playlist
+app.post('/api/compare-playlist', async (req, res) => {
+  const { playlistId, songs } = req.body;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+  
+  if (!playlistId || !songs || !Array.isArray(songs)) {
+    return res.status(400).json({ error: 'Playlist ID and songs array are required' });
+  }
+
+  try {
+    const comparison = await compareWithPlaylist(playlistId, songs);
+    res.json({ comparison });
+  } catch (error) {
+    console.error('Error comparing playlist:', error.message);
+    res.status(500).json({ error: 'Failed to compare playlist: ' + error.message });
+  }
+});
+
+// API endpoint to update an existing Spotify playlist
+app.post('/api/update-playlist', async (req, res) => {
+  const { playlistId, songsToAdd, songsToRemove } = req.body;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+  
+  if (!playlistId) {
+    return res.status(400).json({ error: 'Playlist ID is required' });
+  }
+
+  try {
+    const result = await updateSpotifyPlaylist(playlistId, songsToAdd, songsToRemove);
+    res.json({ result });
+  } catch (error) {
+    console.error('Error updating playlist:', error.message);
+    res.status(500).json({ error: 'Failed to update playlist: ' + error.message });
+  }
+});
+
 // API endpoint to create Spotify playlist
 app.post('/api/create-playlist', async (req, res) => {
   const { playlistName, songs } = req.body;
@@ -107,6 +181,266 @@ app.post('/api/create-playlist', async (req, res) => {
     res.status(500).json({ error: 'Failed to create playlist: ' + error.message });
   }
 });
+
+// Helper function to get user's Spotify playlists
+async function getUserPlaylists() {
+  try {
+    const response = await axios.get('https://api.spotify.com/v1/me/playlists', {
+      params: {
+        limit: 50
+      },
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+    
+    return response.data.items.map(playlist => ({
+      id: playlist.id,
+      name: playlist.name,
+      description: playlist.description,
+      trackCount: playlist.tracks.total,
+      url: playlist.external_urls.spotify,
+      image: playlist.images.length > 0 ? playlist.images[0].url : null,
+      owner: playlist.owner.display_name,
+      public: playlist.public
+    }));
+  } catch (error) {
+    throw new Error(`Spotify API error: ${error.response?.data?.error?.message || error.message}`);
+  }
+}
+
+// Helper function to get tracks from a specific playlist
+async function getPlaylistTracks(playlistId) {
+  try {
+    const tracks = [];
+    let offset = 0;
+    const limit = 100;
+    
+    while (true) {
+      const response = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        params: {
+          offset: offset,
+          limit: limit,
+          fields: 'items(track(id,name,artists,album,uri)),next'
+        },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      
+      const items = response.data.items;
+      tracks.push(...items.map(item => ({
+        id: item.track?.id,
+        name: item.track?.name,
+        artist: item.track?.artists?.[0]?.name,
+        album: item.track?.album?.name,
+        uri: item.track?.uri
+      })).filter(track => track.id)); // Filter out null tracks
+      
+      if (!response.data.next) break;
+      offset += limit;
+    }
+    
+    return tracks;
+  } catch (error) {
+    throw new Error(`Spotify API error: ${error.response?.data?.error?.message || error.message}`);
+  }
+}
+
+// Helper function to search for a track on Spotify with enhanced matching
+async function searchSpotifyTrack(song) {
+  try {
+    // Try different search strategies
+    const searchQueries = [
+      `track:"${song.title}" artist:"${song.artist}"`,
+      `"${song.title}" "${song.artist}"`,
+      `${song.title} ${song.artist}`,
+      `track:"${song.title}"`
+    ];
+    
+    for (const query of searchQueries) {
+      const response = await axios.get('https://api.spotify.com/v1/search', {
+        params: {
+          q: query,
+          type: 'track',
+          limit: 5
+        },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      
+      if (response.data.tracks.items.length > 0) {
+        const tracks = response.data.tracks.items;
+        
+        // Find best match based on similarity
+        for (const track of tracks) {
+          const titleMatch = song.title.toLowerCase() === track.name.toLowerCase();
+          const artistMatch = song.artist.toLowerCase() === track.artists[0]?.name.toLowerCase();
+          const partialTitleMatch = song.title.toLowerCase().includes(track.name.toLowerCase()) || 
+                                  track.name.toLowerCase().includes(song.title.toLowerCase());
+          const partialArtistMatch = song.artist.toLowerCase().includes(track.artists[0]?.name.toLowerCase()) || 
+                                   track.artists[0]?.name.toLowerCase().includes(song.artist.toLowerCase());
+          
+          if ((titleMatch && artistMatch) || 
+              (titleMatch && partialArtistMatch) || 
+              (partialTitleMatch && artistMatch)) {
+            return {
+              id: track.id,
+              name: track.name,
+              artist: track.artists[0]?.name,
+              album: track.album?.name,
+              uri: track.uri,
+              confidence: titleMatch && artistMatch ? 'high' : 'medium'
+            };
+          }
+        }
+        
+        // Return first result if no perfect match but found results
+        const track = tracks[0];
+        return {
+          id: track.id,
+          name: track.name,
+          artist: track.artists[0]?.name,
+          album: track.album?.name,
+          uri: track.uri,
+          confidence: 'low'
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn(`Could not search for track: ${song.title} by ${song.artist}`, error.message);
+    return null;
+  }
+}
+
+// Helper function to compare local songs with Spotify playlist
+async function compareWithPlaylist(playlistId, localSongs) {
+  try {
+    const playlistTracks = await getPlaylistTracks(playlistId);
+    const comparison = {
+      inBoth: [],
+      onlyLocal: [],
+      onlySpotify: playlistTracks.slice(), // Start with all Spotify tracks
+      newMatches: []
+    };
+    
+    for (const localSong of localSongs) {
+      const spotifyMatch = await searchSpotifyTrack(localSong);
+      
+      if (spotifyMatch) {
+        // Check if this track is already in the playlist
+        const existingTrack = playlistTracks.find(track => 
+          track.id === spotifyMatch.id ||
+          (track.name.toLowerCase() === spotifyMatch.name.toLowerCase() && 
+           track.artist.toLowerCase() === spotifyMatch.artist.toLowerCase())
+        );
+        
+        if (existingTrack) {
+          comparison.inBoth.push({
+            local: localSong,
+            spotify: existingTrack,
+            confidence: spotifyMatch.confidence
+          });
+          
+          // Remove from onlySpotify list
+          comparison.onlySpotify = comparison.onlySpotify.filter(track => track.id !== existingTrack.id);
+        } else {
+          comparison.newMatches.push({
+            local: localSong,
+            spotify: spotifyMatch,
+            confidence: spotifyMatch.confidence
+          });
+        }
+      } else {
+        comparison.onlyLocal.push(localSong);
+      }
+    }
+    
+    return comparison;
+  } catch (error) {
+    throw new Error(`Comparison error: ${error.message}`);
+  }
+}
+
+// Helper function to update an existing Spotify playlist
+async function updateSpotifyPlaylist(playlistId, songsToAdd = [], songsToRemove = []) {
+  try {
+    let addedCount = 0;
+    let removedCount = 0;
+    
+    // Add new tracks
+    if (songsToAdd && songsToAdd.length > 0) {
+      const trackUris = [];
+      
+      for (const song of songsToAdd) {
+        const spotifyTrack = await searchSpotifyTrack(song);
+        if (spotifyTrack) {
+          trackUris.push(spotifyTrack.uri);
+        }
+      }
+      
+      if (trackUris.length > 0) {
+        // Add tracks in batches of 100 (Spotify limit)
+        for (let i = 0; i < trackUris.length; i += 100) {
+          const batch = trackUris.slice(i, i + 100);
+          await axios.post(
+            `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+            {
+              uris: batch
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          addedCount += batch.length;
+        }
+      }
+    }
+    
+    // Remove tracks
+    if (songsToRemove && songsToRemove.length > 0) {
+      const tracksToDelete = songsToRemove.map(song => ({
+        uri: song.uri || song.spotify?.uri
+      })).filter(track => track.uri);
+      
+      if (tracksToDelete.length > 0) {
+        // Remove tracks in batches of 100 (Spotify limit)
+        for (let i = 0; i < tracksToDelete.length; i += 100) {
+          const batch = tracksToDelete.slice(i, i + 100);
+          await axios.delete(
+            `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+            {
+              data: {
+                tracks: batch
+              },
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          removedCount += batch.length;
+        }
+      }
+    }
+    
+    return {
+      playlistId,
+      addedCount,
+      removedCount,
+      message: `Updated playlist: added ${addedCount} tracks, removed ${removedCount} tracks`
+    };
+    
+  } catch (error) {
+    throw new Error(`Update playlist error: ${error.response?.data?.error?.message || error.message}`);
+  }
+}
 
 // Helper function to scan music folder
 async function scanMusicFolder(folderPath) {
@@ -182,44 +516,47 @@ async function createSpotifyPlaylist(playlistName, songs) {
     
     const playlistId = playlistResponse.data.id;
     
-    // Search for tracks and add them to playlist
+    // Search for tracks and add them to playlist using enhanced search
     const trackUris = [];
+    const matchResults = [];
+    
     for (const song of songs) {
-      try {
-        const searchQuery = `track:"${song.title}" artist:"${song.artist}"`;
-        const searchResponse = await axios.get('https://api.spotify.com/v1/search', {
-          params: {
-            q: searchQuery,
-            type: 'track',
-            limit: 1
-          },
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
+      const spotifyTrack = await searchSpotifyTrack(song);
+      if (spotifyTrack) {
+        trackUris.push(spotifyTrack.uri);
+        matchResults.push({
+          local: song,
+          spotify: spotifyTrack,
+          confidence: spotifyTrack.confidence
         });
-        
-        if (searchResponse.data.tracks.items.length > 0) {
-          trackUris.push(searchResponse.data.tracks.items[0].uri);
-        }
-      } catch (searchError) {
+      } else {
         console.warn(`Could not find track: ${song.title} by ${song.artist}`);
+        matchResults.push({
+          local: song,
+          spotify: null,
+          confidence: 'none'
+        });
       }
     }
     
     // Add tracks to playlist
     if (trackUris.length > 0) {
-      await axios.post(
-        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-        {
-          uris: trackUris
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
+      // Add tracks in batches of 100 (Spotify limit)
+      for (let i = 0; i < trackUris.length; i += 100) {
+        const batch = trackUris.slice(i, i + 100);
+        await axios.post(
+          `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+          {
+            uris: batch
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
           }
-        }
-      );
+        );
+      }
     }
     
     return {
@@ -227,7 +564,8 @@ async function createSpotifyPlaylist(playlistName, songs) {
       name: playlistName,
       url: playlistResponse.data.external_urls.spotify,
       tracksAdded: trackUris.length,
-      totalSongs: songs.length
+      totalSongs: songs.length,
+      matchResults: matchResults
     };
     
   } catch (error) {
