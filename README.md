@@ -25,18 +25,50 @@ A full-stack application that allows you to scan local music folders and create 
 - **CSS3** for styling
 - Responsive design
 
-## Setup Instructions
+## Quick Start (One-Click Setup)
 
 ### Prerequisites
 - Node.js (v14 or higher)
 - Spotify Developer Account
 - Local music files to sync
 
+### 🚀 One-Click Installation & Start
+
+1. **Install all dependencies for both frontend and backend:**
+   ```bash
+   npm run setup
+   ```
+
+2. **Start both servers simultaneously:**
+   ```bash
+   npm start
+   ```
+   
+   This will start:
+   - Backend server on `http://localhost:3001`
+   - Frontend server on `http://localhost:3000`
+
+3. **Configure Spotify credentials** (one-time setup):
+   ```bash
+   cd backend
+   cp .env.example .env
+   ```
+   
+   Edit `.env` file with your Spotify credentials:
+   ```
+   SPOTIFY_CLIENT_ID=your_spotify_client_id_here
+   SPOTIFY_CLIENT_SECRET=your_spotify_client_secret_here
+   SPOTIFY_REDIRECT_URI=http://localhost:3001/callback
+   PORT=3001
+   ```
+
 ### Spotify App Setup
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
 3. Note down your `Client ID` and `Client Secret`
 4. Add `http://localhost:3001/callback` to your app's Redirect URIs
+
+## Manual Setup (Alternative)
 
 ### Backend Setup
 1. Navigate to the backend directory:
@@ -135,6 +167,7 @@ Content-Type: application/json
 
 ```
 syncme/
+├── package.json          # Root package with convenience scripts
 ├── backend/
 │   ├── package.json
 │   ├── server.js
@@ -150,6 +183,20 @@ syncme/
 └── README.md
 ```
 
+## Available Scripts
+
+### Root Level Scripts
+- `npm run setup` - Install dependencies for both frontend and backend
+- `npm start` or `npm run dev` - Start both servers concurrently
+- `npm run build` - Build frontend for production
+- `npm test` - Run tests for both frontend and backend
+
+### Individual Component Scripts
+- `npm run dev:backend` - Start only the backend server
+- `npm run dev:frontend` - Start only the frontend server
+- `npm run install:backend` - Install only backend dependencies
+- `npm run install:frontend` - Install only frontend dependencies
+
 ## Limitations
 
 - Requires local file system access for scanning
@@ -161,12 +208,18 @@ syncme/
 
 ### Running in Development Mode
 
+**Quick Start (Recommended):**
+```bash
+npm start
+```
+
+**Manual Start:**
 1. Backend: `cd backend && npm run dev`
 2. Frontend: `cd frontend && npm start`
 
 ### Building for Production
 
-1. Frontend: `cd frontend && npm run build`
+1. Frontend: `npm run build`
 2. Backend: Use process manager like PM2 for production deployment
 
 ## Contributing
