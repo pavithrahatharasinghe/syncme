@@ -1,9 +1,16 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders SyncMe app title', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const titleElement = screen.getByText(/SyncMe - Music to Spotify Sync/i);
+  expect(titleElement).toBeInTheDocument();
+});
+
+test('renders authentication section', () => {
+  render(<App />);
+  const authButton = screen.getByText(/Login to Spotify/i);
+  expect(authButton).toBeInTheDocument();
 });
