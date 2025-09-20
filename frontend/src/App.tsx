@@ -217,7 +217,7 @@ function App() {
       setIsAuthenticated(true);
       setMessage('Authentication completed! You can now create playlists.');
       fetchUserPlaylists();
-    }, 2000); // Reduced from 10000 to 2000 for faster testing
+    }, 10000); // Simulate auth completion
   };
 
   const fetchUserPlaylists = async () => {
