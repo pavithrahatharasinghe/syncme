@@ -540,6 +540,7 @@ button:disabled {
 }
 
 .select-for-compare-btn,
+.export-single-btn,
 .open-spotify-btn {
   padding: 0.5rem 0.75rem;
   border: none;
@@ -559,6 +560,40 @@ button:disabled {
 
 .select-for-compare-btn:hover {
   background: #0056b3;
+}
+
+.export-single-btn {
+  background: #6f42c1;
+  color: white;
+}
+
+.export-single-btn:hover:not(:disabled) {
+  background: #5a32a3;
+}
+
+.export-single-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.export-button {
+  background: #6f42c1;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.export-button:hover:not(:disabled) {
+  background: #5a32a3;
+}
+
+.export-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .open-spotify-btn {

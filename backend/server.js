@@ -696,6 +696,125 @@ async function createSpotifyPlaylist(playlistName, songs) {
   }
 }
 
+// API endpoint to export a single playlist as JSON with ISRC codes
+app.get('/api/export-playlist/:playlistId', async (req, res) => {
+  const { playlistId } = req.params;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+
+  try {
+    const playlistDetails = await getPlaylistDetails(playlistId);
+    res.json({ playlist: playlistDetails });
+  } catch (error) {
+    console.error('Error exporting playlist:', error.message);
+    res.status(500).json({ error: 'Failed to export playlist: ' + error.message });
+  }
+});
+
+// API endpoint to export multiple playlists as JSON
+app.post('/api/export-playlists', async (req, res) => {
+  const { playlistIds } = req.body;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+  
+  if (!playlistIds || !Array.isArray(playlistIds)) {
+    return res.status(400).json({ error: 'Playlist IDs array is required' });
+  }
+
+  try {
+    const playlists = [];
+    for (const playlistId of playlistIds) {
+      const playlistDetails = await getPlaylistDetails(playlistId);
+      playlists.push(playlistDetails);
+    }
+    res.json({ playlists });
+  } catch (error) {
+    console.error('Error exporting playlists:', error.message);
+    res.status(500).json({ error: 'Failed to export playlists: ' + error.message });
+  }
+});
+
+// Helper function to get detailed playlist information including ISRC codes
+async function getPlaylistDetails(playlistId) {
+  try {
+    // Get playlist basic info
+    const playlistResponse = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    const playlist = playlistResponse.data;
+    const tracks = [];
+
+    // Get all tracks with detailed information including ISRC
+    let offset = 0;
+    const limit = 50;
+    let hasMore = true;
+
+    while (hasMore) {
+      const tracksResponse = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        params: {
+          offset,
+          limit,
+          fields: 'items(track(id,name,artists(name),album(name,release_date),external_ids,duration_ms,popularity,preview_url)),next'
+        },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      const trackData = tracksResponse.data;
+      
+      for (const item of trackData.items) {
+        if (item.track) {
+          const track = item.track;
+          tracks.push({
+            id: track.id,
+            name: track.name,
+            artists: track.artists.map(artist => artist.name),
+            album: track.album.name,
+            releaseDate: track.album.release_date,
+            durationMs: track.duration_ms,
+            popularity: track.popularity,
+            previewUrl: track.preview_url,
+            isrc: track.external_ids?.isrc || null,
+            spotify_url: `https://open.spotify.com/track/${track.id}`
+          });
+        }
+      }
+
+      hasMore = trackData.next !== null;
+      offset += limit;
+    }
+
+    return {
+      id: playlist.id,
+      name: playlist.name,
+      description: playlist.description,
+      public: playlist.public,
+      collaborative: playlist.collaborative,
+      owner: {
+        id: playlist.owner.id,
+        display_name: playlist.owner.display_name
+      },
+      followers: playlist.followers.total,
+      images: playlist.images,
+      snapshot_id: playlist.snapshot_id,
+      spotify_url: playlist.external_urls.spotify,
+      total_tracks: playlist.tracks.total,
+      tracks: tracks,
+      exported_at: new Date().toISOString()
+    };
+  } catch (error) {
+    throw new Error(`Failed to get playlist details: ${error.response?.data?.error?.message || error.message}`);
+  }
+}
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
