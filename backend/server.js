@@ -815,6 +815,109 @@ async function getPlaylistDetails(playlistId) {
   }
 }
 
+// API endpoint for manual track search
+app.post('/api/search-track', async (req, res) => {
+  const { title, artist, album } = req.body;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+  
+  if (!title || !artist) {
+    return res.status(400).json({ error: 'Track title and artist are required' });
+  }
+
+  try {
+    // Try multiple search strategies
+    const searchQueries = [
+      `track:"${title}" artist:"${artist}"`,
+      `"${title}" "${artist}"`,
+      `${title} ${artist}`,
+      `track:"${title}"`
+    ];
+    
+    const tracks = [];
+    
+    for (const query of searchQueries) {
+      try {
+        const response = await axios.get('https://api.spotify.com/v1/search', {
+          params: {
+            q: query,
+            type: 'track',
+            limit: 10
+          },
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        
+        if (response.data.tracks.items.length > 0) {
+          for (const track of response.data.tracks.items) {
+            tracks.push({
+              id: track.id,
+              name: track.name,
+              artist: track.artists[0]?.name,
+              album: track.album?.name,
+              uri: track.uri,
+              popularity: track.popularity,
+              preview_url: track.preview_url
+            });
+          }
+        }
+      } catch (searchError) {
+        console.warn(`Search query failed: ${query}`, searchError.message);
+      }
+    }
+    
+    // Remove duplicates and sort by popularity
+    const uniqueTracks = tracks.filter((track, index, self) => 
+      index === self.findIndex(t => t.id === track.id)
+    ).sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+    
+    res.json({ tracks: uniqueTracks.slice(0, 10) });
+  } catch (error) {
+    console.error('Error searching for track:', error.message);
+    res.status(500).json({ error: 'Failed to search for track: ' + error.message });
+  }
+});
+
+// API endpoint to add a single track to a playlist
+app.post('/api/add-track-to-playlist', async (req, res) => {
+  const { playlistId, trackUri } = req.body;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+  
+  if (!playlistId || !trackUri) {
+    return res.status(400).json({ error: 'Playlist ID and track URI are required' });
+  }
+
+  try {
+    const response = await axios.post(
+      `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+      {
+        uris: [trackUri]
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    res.json({ 
+      success: true, 
+      message: 'Track added to playlist successfully',
+      snapshot_id: response.data.snapshot_id 
+    });
+  } catch (error) {
+    console.error('Error adding track to playlist:', error.message);
+    res.status(500).json({ error: 'Failed to add track to playlist: ' + error.message });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
