@@ -69,8 +69,72 @@ function App() {
   const [selectedPlaylist, setSelectedPlaylist] = useState<SpotifyPlaylist | null>(null);
   const [playlistComparison, setPlaylistComparison] = useState<PlaylistComparison | null>(null);
   const [activeTab, setActiveTab] = useState<'create' | 'compare' | 'manage'>('create');
+  
+  // Enhanced playlist management state
+  const [playlistFilter, setPlaylistFilter] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'trackCount' | 'owner'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set());
+  const itemsPerPage = 10;
 
   const backendUrl = 'http://localhost:3001';
+
+  // Filter and sort playlists
+  const filteredPlaylists = userPlaylists
+    .filter(playlist => 
+      playlist.name.toLowerCase().includes(playlistFilter.toLowerCase()) ||
+      playlist.owner.toLowerCase().includes(playlistFilter.toLowerCase())
+    )
+    .sort((a, b) => {
+      const getValue = (playlist: SpotifyPlaylist) => {
+        switch (sortBy) {
+          case 'name': return playlist.name.toLowerCase();
+          case 'trackCount': return playlist.trackCount;
+          case 'owner': return playlist.owner.toLowerCase();
+          default: return playlist.name.toLowerCase();
+        }
+      };
+      
+      const aVal = getValue(a);
+      const bVal = getValue(b);
+      
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      
+      return 0;
+    });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredPlaylists.length / itemsPerPage);
+  const paginatedPlaylists = filteredPlaylists.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Bulk actions
+  const togglePlaylistSelection = (playlistId: string) => {
+    const newSelected = new Set(selectedPlaylists);
+    if (newSelected.has(playlistId)) {
+      newSelected.delete(playlistId);
+    } else {
+      newSelected.add(playlistId);
+    }
+    setSelectedPlaylists(newSelected);
+  };
+
+  const selectAllPlaylists = () => {
+    if (selectedPlaylists.size === paginatedPlaylists.length) {
+      setSelectedPlaylists(new Set());
+    } else {
+      setSelectedPlaylists(new Set(paginatedPlaylists.map(p => p.id)));
+    }
+  };
 
   const handleSpotifyLogin = () => {
     window.open(`${backendUrl}/login`, '_blank');
@@ -84,8 +148,6 @@ function App() {
   };
 
   const fetchUserPlaylists = async () => {
-    if (!isAuthenticated) return;
-
     try {
       const response = await fetch(`${backendUrl}/api/playlists`);
       if (!response.ok) {
@@ -351,12 +413,35 @@ function App() {
                 <h3>Compare with Existing Playlist</h3>
                 {userPlaylists.length > 0 ? (
                   <div>
+                    {selectedPlaylist && (
+                      <div className="currently-selected-info">
+                        <h4>Currently Selected Playlist:</h4>
+                        <div className="current-selection-card">
+                          {selectedPlaylist.image && (
+                            <img src={selectedPlaylist.image} alt={selectedPlaylist.name} className="current-selection-image" />
+                          )}
+                          <div className="current-selection-details">
+                            <strong>{selectedPlaylist.name}</strong>
+                            <p>{selectedPlaylist.trackCount} tracks • by {selectedPlaylist.owner}</p>
+                            <p className="selection-description">{selectedPlaylist.description || 'No description'}</p>
+                          </div>
+                          <button 
+                            onClick={() => setSelectedPlaylist(null)} 
+                            className="change-selection-btn"
+                          >
+                            Change Selection
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="playlist-selector">
                       <select 
                         value={selectedPlaylist?.id || ''} 
                         onChange={(e) => {
                           const playlist = userPlaylists.find(p => p.id === e.target.value);
                           setSelectedPlaylist(playlist || null);
+                          setPlaylistComparison(null); // Clear previous comparison
                         }}
                         className="playlist-select"
                       >
@@ -369,12 +454,36 @@ function App() {
                       </select>
                       <button 
                         onClick={handleComparePlaylist}
-                        disabled={loading || !selectedPlaylist}
+                        disabled={loading || !selectedPlaylist || musicFiles.length === 0}
                         className="compare-button"
                       >
                         {loading ? 'Comparing...' : 'Compare'}
                       </button>
                     </div>
+
+                    {!selectedPlaylist && musicFiles.length === 0 && (
+                      <div className="compare-requirements">
+                        <p>To compare playlists, you need to:</p>
+                        <ol>
+                          <li>Scan a music folder first</li>
+                          <li>Select a playlist to compare with</li>
+                        </ol>
+                      </div>
+                    )}
+
+                    {!selectedPlaylist && musicFiles.length > 0 && (
+                      <div className="compare-requirements">
+                        <p>✓ Music files scanned ({musicFiles.length} files)</p>
+                        <p>Now select a playlist to compare with your local music.</p>
+                      </div>
+                    )}
+
+                    {selectedPlaylist && musicFiles.length === 0 && (
+                      <div className="compare-requirements">
+                        <p>✓ Playlist selected: {selectedPlaylist.name}</p>
+                        <p>Please scan a music folder first to compare.</p>
+                      </div>
+                    )}
 
                     {playlistComparison && (
                       <div className="comparison-results">
@@ -432,6 +541,24 @@ function App() {
                             )}
                           </div>
                         )}
+
+                        {playlistComparison.onlyLocal.length > 0 && (
+                          <div className="track-list">
+                            <h5>Tracks Not Found on Spotify:</h5>
+                            {playlistComparison.onlyLocal.slice(0, 3).map((track, index) => (
+                              <div key={index} className="track-item not-found">
+                                <strong>{track.title}</strong> by {track.artist}
+                                <br />
+                                <small>Album: {track.album}</small>
+                              </div>
+                            ))}
+                            {playlistComparison.onlyLocal.length > 3 && (
+                              <div className="track-item">
+                                <small>... and {playlistComparison.onlyLocal.length - 3} more tracks not found</small>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -450,25 +577,208 @@ function App() {
               <div className="tab-content">
                 <h3>Your Spotify Playlists</h3>
                 {userPlaylists.length > 0 ? (
-                  <div className="playlist-grid">
-                    {userPlaylists.map(playlist => (
-                      <div key={playlist.id} className="playlist-card">
-                        {playlist.image && (
-                          <img src={playlist.image} alt={playlist.name} className="playlist-image" />
+                  <div className="playlist-management">
+                    {/* Search and Filter Controls */}
+                    <div className="playlist-controls">
+                      <div className="search-controls">
+                        <input
+                          type="text"
+                          value={playlistFilter}
+                          onChange={(e) => {
+                            setPlaylistFilter(e.target.value);
+                            setCurrentPage(1); // Reset to first page when filtering
+                          }}
+                          placeholder="Search playlists by name or owner..."
+                          className="playlist-search"
+                        />
+                      </div>
+                      
+                      <div className="sort-controls">
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as 'name' | 'trackCount' | 'owner')}
+                          className="sort-select"
+                        >
+                          <option value="name">Sort by Name</option>
+                          <option value="trackCount">Sort by Track Count</option>
+                          <option value="owner">Sort by Owner</option>
+                        </select>
+                        
+                        <button
+                          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                          className="sort-order-btn"
+                          title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+                        >
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </button>
+                      </div>
+                      
+                      <div className="bulk-actions">
+                        {selectedPlaylists.size > 0 && (
+                          <span className="selection-count">
+                            {selectedPlaylists.size} selected
+                          </span>
                         )}
-                        <div className="playlist-info">
-                          <h4>{playlist.name}</h4>
-                          <p>{playlist.trackCount} tracks</p>
-                          <p>by {playlist.owner}</p>
-                          <a href={playlist.url} target="_blank" rel="noopener noreferrer" className="playlist-link">
-                            Open in Spotify
-                          </a>
+                        <button 
+                          onClick={fetchUserPlaylists} 
+                          className="refresh-button"
+                          disabled={loading}
+                        >
+                          {loading ? 'Refreshing...' : 'Refresh'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Results Info */}
+                    <div className="results-info">
+                      Showing {paginatedPlaylists.length} of {filteredPlaylists.length} playlists
+                      {playlistFilter && ` (filtered from ${userPlaylists.length} total)`}
+                    </div>
+
+                    {/* Playlist Table */}
+                    <div className="playlist-table-container">
+                      <table className="playlist-table">
+                        <thead>
+                          <tr>
+                            <th>
+                              <input
+                                type="checkbox"
+                                checked={selectedPlaylists.size === paginatedPlaylists.length && paginatedPlaylists.length > 0}
+                                onChange={selectAllPlaylists}
+                                className="select-all-checkbox"
+                              />
+                            </th>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Tracks</th>
+                            <th>Owner</th>
+                            <th>Public</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedPlaylists.map(playlist => (
+                            <tr key={playlist.id} className={selectedPlaylists.has(playlist.id) ? 'selected' : ''}>
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedPlaylists.has(playlist.id)}
+                                  onChange={() => togglePlaylistSelection(playlist.id)}
+                                  className="select-checkbox"
+                                />
+                              </td>
+                              <td>
+                                <div className="playlist-image-cell">
+                                  {playlist.image ? (
+                                    <img src={playlist.image} alt={playlist.name} className="playlist-thumbnail" />
+                                  ) : (
+                                    <div className="playlist-thumbnail-placeholder">♪</div>
+                                  )}
+                                </div>
+                              </td>
+                              <td>
+                                <div className="playlist-name-cell">
+                                  <strong>{playlist.name}</strong>
+                                  {playlist.description && (
+                                    <div className="playlist-description">{playlist.description}</div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="track-count">{playlist.trackCount}</td>
+                              <td className="owner">{playlist.owner}</td>
+                              <td>
+                                <span className={`public-status ${playlist.public ? 'public' : 'private'}`}>
+                                  {playlist.public ? 'Public' : 'Private'}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="playlist-actions">
+                                  <button
+                                    onClick={() => setSelectedPlaylist(playlist)}
+                                    className="select-for-compare-btn"
+                                    title="Select for comparison"
+                                  >
+                                    Compare
+                                  </button>
+                                  <a 
+                                    href={playlist.url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="open-spotify-btn"
+                                    title="Open in Spotify"
+                                  >
+                                    Open
+                                  </a>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <div className="pagination">
+                        <button
+                          onClick={() => setCurrentPage(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="pagination-btn"
+                        >
+                          Previous
+                        </button>
+                        
+                        <div className="pagination-info">
+                          Page {currentPage} of {totalPages}
+                        </div>
+                        
+                        <button
+                          onClick={() => setCurrentPage(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="pagination-btn"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Selected Playlist Info */}
+                    {selectedPlaylist && (
+                      <div className="selected-playlist-info">
+                        <h4>Selected for Comparison:</h4>
+                        <div className="selected-playlist-card">
+                          {selectedPlaylist.image && (
+                            <img src={selectedPlaylist.image} alt={selectedPlaylist.name} className="selected-playlist-image" />
+                          )}
+                          <div className="selected-playlist-details">
+                            <strong>{selectedPlaylist.name}</strong>
+                            <p>{selectedPlaylist.trackCount} tracks • by {selectedPlaylist.owner}</p>
+                            <div className="selected-playlist-actions">
+                              <button 
+                                onClick={() => setActiveTab('compare')} 
+                                className="go-to-compare-btn"
+                              >
+                                Go to Compare Tab
+                              </button>
+                              <button 
+                                onClick={() => setSelectedPlaylist(null)} 
+                                className="clear-selection-btn"
+                              >
+                                Clear Selection
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 ) : (
-                  <p>No playlists found. Make sure you're authenticated.</p>
+                  <div className="no-playlists">
+                    <p>No playlists found. Make sure you're authenticated.</p>
+                    <button onClick={fetchUserPlaylists} className="refresh-button">
+                      Refresh Playlists
+                    </button>
+                  </div>
                 )}
               </div>
             )}

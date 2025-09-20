@@ -13,9 +13,13 @@ A full-stack application that allows you to scan local music folders and create 
 - 🆕 **NEW:** Compare local music with existing Spotify playlists
 - 🆕 **NEW:** Update existing Spotify playlists with new tracks
 - 🆕 **NEW:** Enhanced track matching with multiple search strategies
-- 🆕 **NEW:** Playlist management and visualization
+- 🆕 **NEW:** Advanced playlist management and visualization
 - 🆕 **NEW:** Confidence scoring for track matches
 - 🆕 **NEW:** Tabbed interface for better user experience
+- ✨ **LATEST:** Enhanced table view with search, filtering, and pagination
+- ✨ **LATEST:** Quick playlist comparison and selection tools
+- ✨ **LATEST:** Sorting by name, track count, or owner
+- ✨ **LATEST:** Bulk selection capabilities for future operations
 
 ## Tech Stack
 
@@ -152,9 +156,20 @@ A full-stack application that allows you to scan local music folders and create 
 - Add new tracks to the existing playlist with one click
 
 #### Managing Playlists
-- View all your Spotify playlists in a visual grid
-- See playlist details including track counts and owners
-- Quick access to open playlists in Spotify
+- View all your Spotify playlists in an advanced table format
+- **Search and Filter:** Find playlists by name or owner in real-time
+- **Sort Options:** Sort by name, track count, or owner (ascending/descending)
+- **Pagination:** Navigate through large playlist collections (10 per page)
+- **Quick Actions:** Compare playlists or open them in Spotify directly
+- **Bulk Selection:** Select multiple playlists with checkboxes for future operations
+- **Detailed Information:** See playlist images, descriptions, track counts, and public/private status
+- **Responsive Design:** Works seamlessly on desktop and mobile devices
+
+#### Enhanced Find and Add Method
+- **Quick Compare:** Click "Compare" button directly from the playlist table
+- **Smart Selection Flow:** Selected playlists automatically populate the Compare tab
+- **Visual Feedback:** See currently selected playlist with full details
+- **Easy Switching:** Change playlist selection without losing context
 
 ## API Endpoints
 
