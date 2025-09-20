@@ -217,7 +217,7 @@ function App() {
       setIsAuthenticated(true);
       setMessage('Authentication completed! You can now create playlists.');
       fetchUserPlaylists();
-    }, 10000); // Simulate auth completion
+    }, 2000); // Reduced from 10000 to 2000 for faster testing
   };
 
   const fetchUserPlaylists = async () => {
@@ -397,141 +397,182 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>SyncMe - Music to Spotify Sync</h1>
-        <p>Sync your local music collection to Spotify playlists</p>
+        <div className="header-content">
+          <div>
+            <h1>🎵 SyncMe</h1>
+            <p>Sync your local music collection to Spotify playlists</p>
+          </div>
+          <div className="header-actions">
+            {isAuthenticated && (
+              <div className="status-indicator success">
+                ✓ Connected to Spotify
+              </div>
+            )}
+          </div>
+        </div>
       </header>
 
       <main className="App-main">
-        <div className="section">
-          <h2>1. Authenticate with Spotify</h2>
-          <button 
-            onClick={handleSpotifyLogin}
-            disabled={loading}
-            className={`auth-button ${isAuthenticated ? 'authenticated' : ''}`}
-          >
-            {isAuthenticated ? '✓ Authenticated' : 'Login to Spotify'}
-          </button>
-        </div>
+        <div className="dashboard-grid">
+          {/* Authentication Card */}
+          <div className="card fade-in">
+            <h2>🔐 Spotify Authentication</h2>
+            {!isAuthenticated ? (
+              <div>
+                <p className="text-muted mb-2">Connect your Spotify account to get started</p>
+                <button 
+                  onClick={handleSpotifyLogin}
+                  disabled={loading}
+                  className="btn btn-primary"
+                >
+                  {loading ? <span className="loading-spinner"></span> : '🎵'} 
+                  Connect to Spotify
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="status-indicator success mb-2">
+                  ✓ Successfully connected to Spotify
+                </div>
+                <p className="text-muted">Ready to sync your music!</p>
+              </div>
+            )}
+          </div>
 
-        <div className="section">
-          <h2>2. Scan Music Folder</h2>
-          <div className="input-group">
-            <input
-              type="text"
-              value={folderPath}
-              onChange={(e) => setFolderPath(e.target.value)}
-              placeholder="Enter folder path (e.g., /path/to/music)"
-              className="folder-input"
-              disabled={loading}
-            />
+          {/* Music Scanner Card */}
+          <div className="card fade-in">
+            <h2>📁 Music Scanner</h2>
+            <div className="form-group">
+              <label className="form-label">Local Music Folder Path</label>
+              <input
+                type="text"
+                value={folderPath}
+                onChange={(e) => setFolderPath(e.target.value)}
+                placeholder="e.g., /Users/music or C:\Music"
+                className="form-control"
+                disabled={loading}
+              />
+            </div>
             <button 
               onClick={handleScanFolder}
-              disabled={loading || !folderPath.trim()}
-              className="scan-button"
+              disabled={loading || !folderPath.trim() || !isAuthenticated}
+              className="btn btn-success"
             >
-              {loading ? 'Scanning...' : 'Scan Folder'}
+              {loading ? <span className="loading-spinner"></span> : '🔍'} 
+              {loading ? 'Scanning...' : 'Scan Music Folder'}
             </button>
+            {musicFiles.length > 0 && (
+              <div className="status-indicator info mt-2">
+                📄 Found {musicFiles.length} music files
+              </div>
+            )}
           </div>
         </div>
 
         {musicFiles.length > 0 && isAuthenticated && (
-          <div className="section">
-            <h2>3. Choose Action</h2>
-            <div className="tabs">
+          <div className="card">
+            <h2>⚡ Music Actions</h2>
+            <div className="tab-navigation">
               <button 
                 className={`tab ${activeTab === 'create' ? 'active' : ''}`}
                 onClick={() => setActiveTab('create')}
               >
-                Create New Playlist
+                📝 Create New Playlist
               </button>
               <button 
                 className={`tab ${activeTab === 'compare' ? 'active' : ''}`}
                 onClick={() => setActiveTab('compare')}
               >
-                Compare & Update
+                🔄 Compare & Update
               </button>
               <button 
                 className={`tab ${activeTab === 'manage' ? 'active' : ''}`}
                 onClick={() => setActiveTab('manage')}
               >
-                Manage Playlists
+                📊 Manage Playlists
               </button>
             </div>
 
             {activeTab === 'create' && (
               <div className="tab-content">
-                <h3>Create New Spotify Playlist</h3>
-                <div className="input-group">
+                <h3>🎵 Create New Spotify Playlist</h3>
+                <div className="form-group">
+                  <label className="form-label">Playlist Name</label>
                   <input
                     type="text"
                     value={playlistName}
                     onChange={(e) => setPlaylistName(e.target.value)}
-                    placeholder="Enter playlist name"
-                    className="playlist-input"
+                    placeholder="Enter a name for your new playlist"
+                    className="form-control"
                     disabled={loading}
                   />
-                  <button 
-                    onClick={handleCreatePlaylist}
-                    disabled={loading || !playlistName.trim()}
-                    className="create-button"
-                  >
-                    {loading ? 'Creating...' : 'Create Playlist'}
-                  </button>
                 </div>
+                <button 
+                  onClick={handleCreatePlaylist}
+                  disabled={loading || !playlistName.trim()}
+                  className="btn btn-primary"
+                >
+                  {loading ? <span className="loading-spinner"></span> : '✨'} 
+                  {loading ? 'Creating Playlist...' : 'Create Playlist'}
+                </button>
               </div>
             )}
 
             {activeTab === 'compare' && (
               <div className="tab-content">
-                <h3>Compare with Existing Playlist</h3>
+                <h3>🔄 Compare with Existing Playlist</h3>
                 {userPlaylists.length > 0 ? (
                   <div>
                     {selectedPlaylist && (
-                      <div className="currently-selected-info">
-                        <h4>Currently Selected Playlist:</h4>
-                        <div className="current-selection-card">
+                      <div className="card">
+                        <h4>🎵 Currently Selected Playlist</h4>
+                        <div className="d-flex align-items-center gap-2">
                           {selectedPlaylist.image && (
-                            <img src={selectedPlaylist.image} alt={selectedPlaylist.name} className="current-selection-image" />
+                            <img src={selectedPlaylist.image} alt={selectedPlaylist.name} className="playlist-thumbnail" />
                           )}
-                          <div className="current-selection-details">
+                          <div>
                             <strong>{selectedPlaylist.name}</strong>
-                            <p>{selectedPlaylist.trackCount} tracks • by {selectedPlaylist.owner}</p>
-                            <p className="selection-description">{selectedPlaylist.description || 'No description'}</p>
+                            <p className="text-muted mb-0">{selectedPlaylist.trackCount} tracks • by {selectedPlaylist.owner}</p>
+                            <p className="text-muted">{selectedPlaylist.description || 'No description'}</p>
                           </div>
                           <button 
                             onClick={() => setSelectedPlaylist(null)} 
-                            className="change-selection-btn"
+                            className="btn btn-outline btn-sm"
                           >
-                            Change Selection
+                            🔄 Change
                           </button>
                         </div>
                       </div>
                     )}
                     
-                    <div className="playlist-selector">
-                      <select 
-                        value={selectedPlaylist?.id || ''} 
-                        onChange={(e) => {
-                          const playlist = userPlaylists.find(p => p.id === e.target.value);
-                          setSelectedPlaylist(playlist || null);
-                          setPlaylistComparison(null); // Clear previous comparison
-                        }}
-                        className="playlist-select"
-                      >
-                        <option value="">Select a playlist to compare</option>
-                        {userPlaylists.map(playlist => (
-                          <option key={playlist.id} value={playlist.id}>
-                            {playlist.name} ({playlist.trackCount} tracks)
-                          </option>
-                        ))}
-                      </select>
-                      <button 
-                        onClick={handleComparePlaylist}
-                        disabled={loading || !selectedPlaylist || musicFiles.length === 0}
-                        className="compare-button"
-                      >
-                        {loading ? 'Comparing...' : 'Compare'}
-                      </button>
+                    <div className="form-group">
+                      <label className="form-label">Select Playlist to Compare</label>
+                      <div className="d-flex gap-2">
+                        <select 
+                          value={selectedPlaylist?.id || ''} 
+                          onChange={(e) => {
+                            const playlist = userPlaylists.find(p => p.id === e.target.value);
+                            setSelectedPlaylist(playlist || null);
+                            setPlaylistComparison(null); // Clear previous comparison
+                          }}
+                          className="form-control"
+                        >
+                          <option value="">Choose a playlist to compare with...</option>
+                          {userPlaylists.map(playlist => (
+                            <option key={playlist.id} value={playlist.id}>
+                              {playlist.name} ({playlist.trackCount} tracks)
+                            </option>
+                          ))}
+                        </select>
+                        <button 
+                          onClick={handleComparePlaylist}
+                          disabled={loading || !selectedPlaylist || musicFiles.length === 0}
+                          className="btn btn-primary"
+                        >
+                          {loading ? <span className="loading-spinner"></span> : '🔍'} 
+                          {loading ? 'Comparing...' : 'Compare'}
+                        </button>
+                      </div>
                     </div>
 
                     {!selectedPlaylist && musicFiles.length === 0 && (
@@ -648,7 +689,7 @@ function App() {
 
             {activeTab === 'manage' && (
               <div className="tab-content">
-                <h3>Your Spotify Playlists</h3>
+                <h3>📊 Your Spotify Playlists</h3>
                 {userPlaylists.length > 0 ? (
                   <div className="playlist-management">
                     {/* Search and Filter Controls */}
@@ -661,8 +702,8 @@ function App() {
                             setPlaylistFilter(e.target.value);
                             setCurrentPage(1); // Reset to first page when filtering
                           }}
-                          placeholder="Search playlists by name or owner..."
-                          className="playlist-search"
+                          placeholder="🔍 Search playlists by name or owner..."
+                          className="form-control"
                         />
                       </div>
                       
@@ -670,7 +711,7 @@ function App() {
                         <select
                           value={sortBy}
                           onChange={(e) => setSortBy(e.target.value as 'name' | 'trackCount' | 'owner')}
-                          className="sort-select"
+                          className="form-control"
                         >
                           <option value="name">Sort by Name</option>
                           <option value="trackCount">Sort by Track Count</option>
@@ -679,34 +720,36 @@ function App() {
                         
                         <button
                           onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                          className="sort-order-btn"
+                          className="btn btn-outline btn-sm"
                           title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
                         >
                           {sortOrder === 'asc' ? '↑' : '↓'}
                         </button>
                       </div>
                       
-                      <div className="bulk-actions">
+                      <div className="sort-controls">
                         {selectedPlaylists.size > 0 && (
                           <>
-                            <span className="selection-count">
+                            <div className="status-indicator info">
                               {selectedPlaylists.size} selected
-                            </span>
+                            </div>
                             <button 
                               onClick={handleBulkExport}
-                              className="export-button"
+                              className="btn btn-secondary btn-sm"
                               disabled={exportLoading}
                               title="Export selected playlists as JSON"
                             >
+                              {exportLoading ? <span className="loading-spinner"></span> : '📤'} 
                               {exportLoading ? 'Exporting...' : 'Export Selected'}
                             </button>
                           </>
                         )}
                         <button 
                           onClick={fetchUserPlaylists} 
-                          className="refresh-button"
+                          className="btn btn-outline btn-sm"
                           disabled={loading}
                         >
+                          {loading ? <span className="loading-spinner"></span> : '🔄'} 
                           {loading ? 'Refreshing...' : 'Refresh'}
                         </button>
                       </div>
@@ -778,27 +821,27 @@ function App() {
                                 <div className="playlist-actions">
                                   <button
                                     onClick={() => setSelectedPlaylist(playlist)}
-                                    className="select-for-compare-btn"
+                                    className="btn btn-primary btn-sm"
                                     title="Select for comparison"
                                   >
-                                    Compare
+                                    🔄 Compare
                                   </button>
                                   <button
                                     onClick={() => handleExportPlaylist(playlist.id)}
-                                    className="export-single-btn"
+                                    className="btn btn-secondary btn-sm"
                                     disabled={exportLoading}
                                     title="Export playlist as JSON"
                                   >
-                                    Export
+                                    📤 Export
                                   </button>
                                   <a 
                                     href={playlist.url} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="open-spotify-btn"
+                                    className="btn btn-outline btn-sm"
                                     title="Open in Spotify"
                                   >
-                                    Open
+                                    🎵 Open
                                   </a>
                                 </div>
                               </td>
@@ -883,8 +926,8 @@ function App() {
         )}
 
         {musicFiles.length > 0 && (
-          <div className="section">
-            <h3>Found Music Files ({musicFiles.length})</h3>
+          <div className="card">
+            <h3>🎵 Found Music Files ({musicFiles.length})</h3>
             <div className="music-list">
               {musicFiles.slice(0, 10).map((file, index) => (
                 <div key={index} className="music-item">
@@ -894,7 +937,7 @@ function App() {
                 </div>
               ))}
               {musicFiles.length > 10 && (
-                <div className="music-item">
+                <div className="music-item text-muted">
                   <small>... and {musicFiles.length - 10} more files</small>
                 </div>
               )}
