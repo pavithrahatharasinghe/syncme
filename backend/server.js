@@ -98,7 +98,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'All my favorite songs',
         trackCount: 45,
         url: 'https://open.spotify.com/playlist/playlist1',
-        image: 'https://via.placeholder.com/150/1db954/ffffff?text=Favorites',
+        image: null,
         owner: 'john_doe',
         public: true
       },
@@ -108,7 +108,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Best rock songs from the 80s and 90s',
         trackCount: 87,
         url: 'https://open.spotify.com/playlist/playlist2',
-        image: 'https://via.placeholder.com/150/ff6b6b/ffffff?text=Rock',
+        image: null,
         owner: 'john_doe',
         public: false
       },
@@ -118,7 +118,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Relaxing music for work and study',
         trackCount: 32,
         url: 'https://open.spotify.com/playlist/playlist3',
-        image: 'https://via.placeholder.com/150/4ecdc4/ffffff?text=Chill',
+        image: null,
         owner: 'john_doe',
         public: true
       },
@@ -128,7 +128,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'High energy songs for gym sessions',
         trackCount: 67,
         url: 'https://open.spotify.com/playlist/playlist4',
-        image: 'https://via.placeholder.com/150/ff8c00/ffffff?text=Workout',
+        image: null,
         owner: 'john_doe',
         public: false
       },
@@ -138,7 +138,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Classic and modern jazz tracks',
         trackCount: 123,
         url: 'https://open.spotify.com/playlist/playlist5',
-        image: 'https://via.placeholder.com/150/9b59b6/ffffff?text=Jazz',
+        image: null,
         owner: 'music_lover',
         public: true
       },
@@ -148,7 +148,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Top summer songs of 2023',
         trackCount: 54,
         url: 'https://open.spotify.com/playlist/playlist6',
-        image: 'https://via.placeholder.com/150/f39c12/ffffff?text=Summer',
+        image: null,
         owner: 'music_lover',
         public: true
       },
@@ -158,7 +158,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Beautiful indie folk songs',
         trackCount: 78,
         url: 'https://open.spotify.com/playlist/playlist7',
-        image: 'https://via.placeholder.com/150/27ae60/ffffff?text=Folk',
+        image: null,
         owner: 'indie_fan',
         public: false
       },
@@ -168,7 +168,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Electronic music for late nights',
         trackCount: 99,
         url: 'https://open.spotify.com/playlist/playlist8',
-        image: 'https://via.placeholder.com/150/3498db/ffffff?text=Electronic',
+        image: null,
         owner: 'techno_head',
         public: true
       },
@@ -178,7 +178,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Greatest classical compositions',
         trackCount: 156,
         url: 'https://open.spotify.com/playlist/playlist9',
-        image: 'https://via.placeholder.com/150/8e44ad/ffffff?text=Classical',
+        image: null,
         owner: 'classic_music',
         public: true
       },
@@ -188,7 +188,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Best country music collection',
         trackCount: 89,
         url: 'https://open.spotify.com/playlist/playlist10',
-        image: 'https://via.placeholder.com/150/d35400/ffffff?text=Country',
+        image: null,
         owner: 'country_fan',
         public: false
       },
@@ -198,7 +198,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Must-have hip hop tracks',
         trackCount: 76,
         url: 'https://open.spotify.com/playlist/playlist11',
-        image: 'https://via.placeholder.com/150/2c3e50/ffffff?text=HipHop',
+        image: null,
         owner: 'rap_master',
         public: true
       },
@@ -208,7 +208,7 @@ app.get('/api/playlists', async (req, res) => {
         description: 'Unplugged and acoustic versions',
         trackCount: 43,
         url: 'https://open.spotify.com/playlist/playlist12',
-        image: 'https://via.placeholder.com/150/95a5a6/ffffff?text=Acoustic',
+        image: null,
         owner: 'acoustic_lover',
         public: false
       }
@@ -308,25 +308,41 @@ app.post('/api/create-playlist', async (req, res) => {
 // Helper function to get user's Spotify playlists
 async function getUserPlaylists() {
   try {
-    const response = await axios.get('https://api.spotify.com/v1/me/playlists', {
-      params: {
-        limit: 50
-      },
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
+    const allPlaylists = [];
+    let offset = 0;
+    const limit = 50; // Maximum allowed by Spotify API
+    let hasMore = true;
     
-    return response.data.items.map(playlist => ({
-      id: playlist.id,
-      name: playlist.name,
-      description: playlist.description,
-      trackCount: playlist.tracks.total,
-      url: playlist.external_urls.spotify,
-      image: playlist.images.length > 0 ? playlist.images[0].url : null,
-      owner: playlist.owner.display_name,
-      public: playlist.public
-    }));
+    while (hasMore) {
+      const response = await axios.get('https://api.spotify.com/v1/me/playlists', {
+        params: {
+          limit,
+          offset
+        },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      
+      const playlists = response.data.items.map(playlist => ({
+        id: playlist.id,
+        name: playlist.name,
+        description: playlist.description,
+        trackCount: playlist.tracks.total,
+        url: playlist.external_urls.spotify,
+        image: playlist.images.length > 0 ? playlist.images[0].url : null,
+        owner: playlist.owner.display_name,
+        public: playlist.public
+      }));
+      
+      allPlaylists.push(...playlists);
+      
+      // Check if there are more playlists to fetch
+      hasMore = response.data.next !== null;
+      offset += limit;
+    }
+    
+    return allPlaylists;
   } catch (error) {
     throw new Error(`Spotify API error: ${error.response?.data?.error?.message || error.message}`);
   }
@@ -701,7 +717,91 @@ app.get('/api/export-playlist/:playlistId', async (req, res) => {
   const { playlistId } = req.params;
   
   if (!accessToken) {
-    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+    // Return mock export data for demo purposes
+    const mockPlaylistsMap = {
+      'playlist1': {
+        id: 'playlist1',
+        name: 'My Favorites',
+        description: 'All my favorite songs',
+        public: true,
+        collaborative: false,
+        owner: {
+          id: 'john_doe',
+          display_name: 'john_doe'
+        },
+        followers: 1250,
+        images: [],
+        snapshot_id: 'mock_snapshot_123',
+        spotify_url: 'https://open.spotify.com/playlist/playlist1',
+        total_tracks: 45,
+        tracks: [
+          {
+            id: 'track1',
+            name: 'Sample Song 1',
+            artists: ['Artist 1', 'Artist 2'],
+            album: 'Sample Album',
+            releaseDate: '2023-01-15',
+            durationMs: 234567,
+            popularity: 75,
+            previewUrl: 'https://p.scdn.co/mp3-preview/sample1',
+            isrc: 'USUM71234567',
+            spotify_url: 'https://open.spotify.com/track/track1'
+          },
+          {
+            id: 'track2',
+            name: 'Sample Song 2',
+            artists: ['Artist 3'],
+            album: 'Another Album',
+            releaseDate: '2023-02-20',
+            durationMs: 187345,
+            popularity: 68,
+            previewUrl: 'https://p.scdn.co/mp3-preview/sample2',
+            isrc: 'GBUM71234568',
+            spotify_url: 'https://open.spotify.com/track/track2'
+          }
+        ],
+        exported_at: new Date().toISOString()
+      }
+    };
+    
+    const mockPlaylist = mockPlaylistsMap[playlistId];
+    if (!mockPlaylist) {
+      // Generate a generic mock for any playlist ID
+      const genericMock = {
+        id: playlistId,
+        name: `Mock Playlist ${playlistId}`,
+        description: 'This is a mock playlist for demo purposes',
+        public: true,
+        collaborative: false,
+        owner: {
+          id: 'mock_user',
+          display_name: 'Mock User'
+        },
+        followers: Math.floor(Math.random() * 1000),
+        images: [],
+        snapshot_id: `mock_snapshot_${playlistId}`,
+        spotify_url: `https://open.spotify.com/playlist/${playlistId}`,
+        total_tracks: Math.floor(Math.random() * 100) + 10,
+        tracks: [
+          {
+            id: `${playlistId}_track1`,
+            name: 'Mock Song 1',
+            artists: ['Mock Artist 1'],
+            album: 'Mock Album',
+            releaseDate: '2023-01-01',
+            durationMs: 210000,
+            popularity: 50,
+            previewUrl: null,
+            isrc: 'MOCK12345678',
+            spotify_url: `https://open.spotify.com/track/${playlistId}_track1`
+          }
+        ],
+        exported_at: new Date().toISOString()
+      };
+      return res.json({ playlist: genericMock });
+    }
+    
+    return res.json({ playlist: mockPlaylist });
   }
 
   try {
@@ -717,12 +817,57 @@ app.get('/api/export-playlist/:playlistId', async (req, res) => {
 app.post('/api/export-playlists', async (req, res) => {
   const { playlistIds } = req.body;
   
-  if (!accessToken) {
-    return res.status(401).json({ error: 'Not authenticated with Spotify' });
-  }
-  
   if (!playlistIds || !Array.isArray(playlistIds)) {
     return res.status(400).json({ error: 'Playlist IDs array is required' });
+  }
+  
+  if (!accessToken) {
+    // Return mock export data for demo purposes
+    const mockPlaylists = playlistIds.map(playlistId => ({
+      id: playlistId,
+      name: `Mock Playlist ${playlistId}`,
+      description: 'This is a mock playlist for demo purposes',
+      public: true,
+      collaborative: false,
+      owner: {
+        id: 'mock_user',
+        display_name: 'Mock User'
+      },
+      followers: Math.floor(Math.random() * 1000),
+      images: [],
+      snapshot_id: `mock_snapshot_${playlistId}`,
+      spotify_url: `https://open.spotify.com/playlist/${playlistId}`,
+      total_tracks: Math.floor(Math.random() * 100) + 10,
+      tracks: [
+        {
+          id: `${playlistId}_track1`,
+          name: 'Mock Song 1',
+          artists: ['Mock Artist 1'],
+          album: 'Mock Album',
+          releaseDate: '2023-01-01',
+          durationMs: 210000,
+          popularity: 50,
+          previewUrl: null,
+          isrc: 'MOCK12345678',
+          spotify_url: `https://open.spotify.com/track/${playlistId}_track1`
+        },
+        {
+          id: `${playlistId}_track2`,
+          name: 'Mock Song 2',
+          artists: ['Mock Artist 2'],
+          album: 'Another Mock Album',
+          releaseDate: '2023-02-15',
+          durationMs: 180000,
+          popularity: 45,
+          previewUrl: null,
+          isrc: 'MOCK12345679',
+          spotify_url: `https://open.spotify.com/track/${playlistId}_track2`
+        }
+      ],
+      exported_at: new Date().toISOString()
+    }));
+    
+    return res.json({ playlists: mockPlaylists });
   }
 
   try {

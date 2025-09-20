@@ -485,12 +485,6 @@ function App() {
               >
                 🔄 Compare & Update
               </button>
-              <button 
-                className={`tab ${activeTab === 'manage' ? 'active' : ''}`}
-                onClick={() => setActiveTab('manage')}
-              >
-                📊 Manage Playlists
-              </button>
             </div>
 
             {activeTab === 'create' && (
@@ -686,234 +680,234 @@ function App() {
                 )}
               </div>
             )}
+          </div>
+        )}
 
-            {activeTab === 'manage' && (
-              <div className="tab-content">
-                <h3>📊 Your Spotify Playlists</h3>
-                {userPlaylists.length > 0 ? (
-                  <div className="playlist-management">
-                    {/* Search and Filter Controls */}
-                    <div className="playlist-controls">
-                      <div className="search-controls">
-                        <input
-                          type="text"
-                          value={playlistFilter}
-                          onChange={(e) => {
-                            setPlaylistFilter(e.target.value);
-                            setCurrentPage(1); // Reset to first page when filtering
-                          }}
-                          placeholder="🔍 Search playlists by name or owner..."
-                          className="form-control"
-                        />
-                      </div>
-                      
-                      <div className="sort-controls">
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value as 'name' | 'trackCount' | 'owner')}
-                          className="form-control"
-                        >
-                          <option value="name">Sort by Name</option>
-                          <option value="trackCount">Sort by Track Count</option>
-                          <option value="owner">Sort by Owner</option>
-                        </select>
-                        
-                        <button
-                          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                          className="btn btn-outline btn-sm"
-                          title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
-                        >
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </button>
-                      </div>
-                      
-                      <div className="sort-controls">
-                        {selectedPlaylists.size > 0 && (
-                          <>
-                            <div className="status-indicator info">
-                              {selectedPlaylists.size} selected
-                            </div>
-                            <button 
-                              onClick={handleBulkExport}
-                              className="btn btn-secondary btn-sm"
-                              disabled={exportLoading}
-                              title="Export selected playlists as JSON"
-                            >
-                              {exportLoading ? <span className="loading-spinner"></span> : '📤'} 
-                              {exportLoading ? 'Exporting...' : 'Export Selected'}
-                            </button>
-                          </>
-                        )}
-                        <button 
-                          onClick={fetchUserPlaylists} 
-                          className="btn btn-outline btn-sm"
-                          disabled={loading}
-                        >
-                          {loading ? <span className="loading-spinner"></span> : '🔄'} 
-                          {loading ? 'Refreshing...' : 'Refresh'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Results Info */}
-                    <div className="results-info">
-                      Showing {paginatedPlaylists.length} of {filteredPlaylists.length} playlists
-                      {playlistFilter && ` (filtered from ${userPlaylists.length} total)`}
-                    </div>
-
-                    {/* Playlist Table */}
-                    <div className="playlist-table-container">
-                      <table className="playlist-table">
-                        <thead>
-                          <tr>
-                            <th>
-                              <input
-                                type="checkbox"
-                                checked={selectedPlaylists.size === paginatedPlaylists.length && paginatedPlaylists.length > 0}
-                                onChange={selectAllPlaylists}
-                                className="select-all-checkbox"
-                              />
-                            </th>
-                            <th>Image</th>
-                            <th>Name</th>
-                            <th>Tracks</th>
-                            <th>Owner</th>
-                            <th>Public</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paginatedPlaylists.map(playlist => (
-                            <tr key={playlist.id} className={selectedPlaylists.has(playlist.id) ? 'selected' : ''}>
-                              <td>
-                                <input
-                                  type="checkbox"
-                                  checked={selectedPlaylists.has(playlist.id)}
-                                  onChange={() => togglePlaylistSelection(playlist.id)}
-                                  className="select-checkbox"
-                                />
-                              </td>
-                              <td>
-                                <div className="playlist-image-cell">
-                                  {playlist.image ? (
-                                    <img src={playlist.image} alt={playlist.name} className="playlist-thumbnail" />
-                                  ) : (
-                                    <div className="playlist-thumbnail-placeholder">♪</div>
-                                  )}
-                                </div>
-                              </td>
-                              <td>
-                                <div className="playlist-name-cell">
-                                  <strong>{playlist.name}</strong>
-                                  {playlist.description && (
-                                    <div className="playlist-description">{playlist.description}</div>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="track-count">{playlist.trackCount}</td>
-                              <td className="owner">{playlist.owner}</td>
-                              <td>
-                                <span className={`public-status ${playlist.public ? 'public' : 'private'}`}>
-                                  {playlist.public ? 'Public' : 'Private'}
-                                </span>
-                              </td>
-                              <td>
-                                <div className="playlist-actions">
-                                  <button
-                                    onClick={() => setSelectedPlaylist(playlist)}
-                                    className="btn btn-primary btn-sm"
-                                    title="Select for comparison"
-                                  >
-                                    🔄 Compare
-                                  </button>
-                                  <button
-                                    onClick={() => handleExportPlaylist(playlist.id)}
-                                    className="btn btn-secondary btn-sm"
-                                    disabled={exportLoading}
-                                    title="Export playlist as JSON"
-                                  >
-                                    📤 Export
-                                  </button>
-                                  <a 
-                                    href={playlist.url} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    className="btn btn-outline btn-sm"
-                                    title="Open in Spotify"
-                                  >
-                                    🎵 Open
-                                  </a>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                      <div className="pagination">
-                        <button
-                          onClick={() => setCurrentPage(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className="pagination-btn"
-                        >
-                          Previous
-                        </button>
-                        
-                        <div className="pagination-info">
-                          Page {currentPage} of {totalPages}
-                        </div>
-                        
-                        <button
-                          onClick={() => setCurrentPage(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className="pagination-btn"
-                        >
-                          Next
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Selected Playlist Info */}
-                    {selectedPlaylist && (
-                      <div className="selected-playlist-info">
-                        <h4>Selected for Comparison:</h4>
-                        <div className="selected-playlist-card">
-                          {selectedPlaylist.image && (
-                            <img src={selectedPlaylist.image} alt={selectedPlaylist.name} className="selected-playlist-image" />
-                          )}
-                          <div className="selected-playlist-details">
-                            <strong>{selectedPlaylist.name}</strong>
-                            <p>{selectedPlaylist.trackCount} tracks • by {selectedPlaylist.owner}</p>
-                            <div className="selected-playlist-actions">
-                              <button 
-                                onClick={() => setActiveTab('compare')} 
-                                className="go-to-compare-btn"
-                              >
-                                Go to Compare Tab
-                              </button>
-                              <button 
-                                onClick={() => setSelectedPlaylist(null)} 
-                                className="clear-selection-btn"
-                              >
-                                Clear Selection
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+        {isAuthenticated && (
+          <div className="card">
+            <h2>📊 Manage Playlists</h2>
+            {userPlaylists.length > 0 ? (
+              <div className="playlist-management">
+                {/* Search and Filter Controls */}
+                <div className="playlist-controls">
+                  <div className="search-controls">
+                    <input
+                      type="text"
+                      value={playlistFilter}
+                      onChange={(e) => {
+                        setPlaylistFilter(e.target.value);
+                        setCurrentPage(1); // Reset to first page when filtering
+                      }}
+                      placeholder="🔍 Search playlists by name or owner..."
+                      className="form-control"
+                    />
                   </div>
-                ) : (
-                  <div className="no-playlists">
-                    <p>No playlists found. Make sure you're authenticated.</p>
-                    <button onClick={fetchUserPlaylists} className="refresh-button">
-                      Refresh Playlists
+                  
+                  <div className="sort-controls">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as 'name' | 'trackCount' | 'owner')}
+                      className="form-control"
+                    >
+                      <option value="name">Sort by Name</option>
+                      <option value="trackCount">Sort by Track Count</option>
+                      <option value="owner">Sort by Owner</option>
+                    </select>
+                    
+                    <button
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                      className="btn btn-outline btn-sm"
+                      title={`Sort ${sortOrder === 'asc' ? 'Descending' : 'Ascending'}`}
+                    >
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </button>
+                  </div>
+                  
+                  <div className="sort-controls">
+                    {selectedPlaylists.size > 0 && (
+                      <>
+                        <div className="status-indicator info">
+                          {selectedPlaylists.size} selected
+                        </div>
+                        <button 
+                          onClick={handleBulkExport}
+                          className="btn btn-secondary btn-sm"
+                          disabled={exportLoading}
+                          title="Export selected playlists as JSON"
+                        >
+                          {exportLoading ? <span className="loading-spinner"></span> : '📤'} 
+                          {exportLoading ? 'Exporting...' : 'Export Selected'}
+                        </button>
+                      </>
+                    )}
+                    <button 
+                      onClick={fetchUserPlaylists} 
+                      className="btn btn-outline btn-sm"
+                      disabled={loading}
+                    >
+                      {loading ? <span className="loading-spinner"></span> : '🔄'} 
+                      {loading ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Results Info */}
+                <div className="results-info">
+                  Showing {paginatedPlaylists.length} of {filteredPlaylists.length} playlists
+                  {playlistFilter && ` (filtered from ${userPlaylists.length} total)`}
+                </div>
+
+                {/* Playlist Table */}
+                <div className="playlist-table-container">
+                  <table className="playlist-table">
+                    <thead>
+                      <tr>
+                        <th>
+                          <input
+                            type="checkbox"
+                            checked={selectedPlaylists.size === paginatedPlaylists.length && paginatedPlaylists.length > 0}
+                            onChange={selectAllPlaylists}
+                            className="select-all-checkbox"
+                          />
+                        </th>
+                        <th>Image</th>
+                        <th>Name</th>
+                        <th>Tracks</th>
+                        <th>Owner</th>
+                        <th>Public</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedPlaylists.map(playlist => (
+                        <tr key={playlist.id} className={selectedPlaylists.has(playlist.id) ? 'selected' : ''}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedPlaylists.has(playlist.id)}
+                              onChange={() => togglePlaylistSelection(playlist.id)}
+                              className="select-checkbox"
+                            />
+                          </td>
+                          <td>
+                            <div className="playlist-image-cell">
+                              {playlist.image ? (
+                                <img src={playlist.image} alt={playlist.name} className="playlist-thumbnail" />
+                              ) : (
+                                <div className="playlist-thumbnail-placeholder">♪</div>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="playlist-name-cell">
+                              <strong>{playlist.name}</strong>
+                              {playlist.description && (
+                                <div className="playlist-description">{playlist.description}</div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="track-count">{playlist.trackCount}</td>
+                          <td className="owner">{playlist.owner}</td>
+                          <td>
+                            <span className={`public-status ${playlist.public ? 'public' : 'private'}`}>
+                              {playlist.public ? 'Public' : 'Private'}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="playlist-actions">
+                              <button
+                                onClick={() => setSelectedPlaylist(playlist)}
+                                className="btn btn-primary btn-sm"
+                                title="Select for comparison"
+                              >
+                                🔄 Compare
+                              </button>
+                              <button
+                                onClick={() => handleExportPlaylist(playlist.id)}
+                                className="btn btn-secondary btn-sm"
+                                disabled={exportLoading}
+                                title="Export playlist as JSON"
+                              >
+                                📤 Export
+                              </button>
+                              <a 
+                                href={playlist.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="btn btn-outline btn-sm"
+                                title="Open in Spotify"
+                              >
+                                🎵 Open
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="pagination">
+                    <button
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="pagination-btn"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="pagination-info">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    
+                    <button
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="pagination-btn"
+                    >
+                      Next
                     </button>
                   </div>
                 )}
+
+                {/* Selected Playlist Info */}
+                {selectedPlaylist && (
+                  <div className="selected-playlist-info">
+                    <h4>Selected for Comparison:</h4>
+                    <div className="selected-playlist-card">
+                      {selectedPlaylist.image && (
+                        <img src={selectedPlaylist.image} alt={selectedPlaylist.name} className="selected-playlist-image" />
+                      )}
+                      <div className="selected-playlist-details">
+                        <strong>{selectedPlaylist.name}</strong>
+                        <p>{selectedPlaylist.trackCount} tracks • by {selectedPlaylist.owner}</p>
+                        <div className="selected-playlist-actions">
+                          <button 
+                            onClick={() => setActiveTab('compare')} 
+                            className="go-to-compare-btn"
+                          >
+                            Go to Compare Tab
+                          </button>
+                          <button 
+                            onClick={() => setSelectedPlaylist(null)} 
+                            className="clear-selection-btn"
+                          >
+                            Clear Selection
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="no-playlists">
+                <p>Loading playlists...</p>
+                <button onClick={fetchUserPlaylists} className="refresh-button">
+                  Refresh Playlists
+                </button>
               </div>
             )}
           </div>
