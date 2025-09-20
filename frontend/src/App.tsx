@@ -76,6 +76,7 @@ function App() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlaylists, setSelectedPlaylists] = useState<Set<string>>(new Set());
+  const [exportLoading, setExportLoading] = useState(false);
   const itemsPerPage = 10;
 
   const backendUrl = 'http://localhost:3001';
@@ -133,6 +134,78 @@ function App() {
       setSelectedPlaylists(new Set());
     } else {
       setSelectedPlaylists(new Set(paginatedPlaylists.map(p => p.id)));
+    }
+  };
+
+  const handleExportPlaylist = async (playlistId: string) => {
+    setExportLoading(true);
+    try {
+      const response = await fetch(`${backendUrl}/api/export-playlist/${playlistId}`);
+      if (!response.ok) {
+        throw new Error('Failed to export playlist');
+      }
+      const data = await response.json();
+      
+      // Create and download the JSON file
+      const blob = new Blob([JSON.stringify(data.playlist, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${data.playlist.name.replace(/[^a-zA-Z0-9]/g, '_')}_export.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setMessage(`Successfully exported "${data.playlist.name}" as JSON`);
+    } catch (error) {
+      setMessage(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handleBulkExport = async () => {
+    if (selectedPlaylists.size === 0) {
+      setMessage('Please select playlists to export');
+      return;
+    }
+
+    setExportLoading(true);
+    try {
+      const response = await fetch(`${backendUrl}/api/export-playlists`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          playlistIds: Array.from(selectedPlaylists)
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export playlists');
+      }
+
+      const data = await response.json();
+      
+      // Create and download the JSON file
+      const blob = new Blob([JSON.stringify(data.playlists, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `spotify_playlists_export_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setMessage(`Successfully exported ${selectedPlaylists.size} playlists as JSON`);
+      setSelectedPlaylists(new Set()); // Clear selection
+    } catch (error) {
+      setMessage(`Bulk export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -615,9 +688,19 @@ function App() {
                       
                       <div className="bulk-actions">
                         {selectedPlaylists.size > 0 && (
-                          <span className="selection-count">
-                            {selectedPlaylists.size} selected
-                          </span>
+                          <>
+                            <span className="selection-count">
+                              {selectedPlaylists.size} selected
+                            </span>
+                            <button 
+                              onClick={handleBulkExport}
+                              className="export-button"
+                              disabled={exportLoading}
+                              title="Export selected playlists as JSON"
+                            >
+                              {exportLoading ? 'Exporting...' : 'Export Selected'}
+                            </button>
+                          </>
                         )}
                         <button 
                           onClick={fetchUserPlaylists} 
@@ -699,6 +782,14 @@ function App() {
                                     title="Select for comparison"
                                   >
                                     Compare
+                                  </button>
+                                  <button
+                                    onClick={() => handleExportPlaylist(playlist.id)}
+                                    className="export-single-btn"
+                                    disabled={exportLoading}
+                                    title="Export playlist as JSON"
+                                  >
+                                    Export
                                   </button>
                                   <a 
                                     href={playlist.url} 

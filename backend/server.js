@@ -696,6 +696,228 @@ async function createSpotifyPlaylist(playlistName, songs) {
   }
 }
 
+// API endpoint to export a single playlist as JSON with ISRC codes
+app.get('/api/export-playlist/:playlistId', async (req, res) => {
+  const { playlistId } = req.params;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+
+  try {
+    const playlistDetails = await getPlaylistDetails(playlistId);
+    res.json({ playlist: playlistDetails });
+  } catch (error) {
+    console.error('Error exporting playlist:', error.message);
+    res.status(500).json({ error: 'Failed to export playlist: ' + error.message });
+  }
+});
+
+// API endpoint to export multiple playlists as JSON
+app.post('/api/export-playlists', async (req, res) => {
+  const { playlistIds } = req.body;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+  
+  if (!playlistIds || !Array.isArray(playlistIds)) {
+    return res.status(400).json({ error: 'Playlist IDs array is required' });
+  }
+
+  try {
+    const playlists = [];
+    for (const playlistId of playlistIds) {
+      const playlistDetails = await getPlaylistDetails(playlistId);
+      playlists.push(playlistDetails);
+    }
+    res.json({ playlists });
+  } catch (error) {
+    console.error('Error exporting playlists:', error.message);
+    res.status(500).json({ error: 'Failed to export playlists: ' + error.message });
+  }
+});
+
+// Helper function to get detailed playlist information including ISRC codes
+async function getPlaylistDetails(playlistId) {
+  try {
+    // Get playlist basic info
+    const playlistResponse = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    const playlist = playlistResponse.data;
+    const tracks = [];
+
+    // Get all tracks with detailed information including ISRC
+    let offset = 0;
+    const limit = 50;
+    let hasMore = true;
+
+    while (hasMore) {
+      const tracksResponse = await axios.get(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+        params: {
+          offset,
+          limit,
+          fields: 'items(track(id,name,artists(name),album(name,release_date),external_ids,duration_ms,popularity,preview_url)),next'
+        },
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+
+      const trackData = tracksResponse.data;
+      
+      for (const item of trackData.items) {
+        if (item.track) {
+          const track = item.track;
+          tracks.push({
+            id: track.id,
+            name: track.name,
+            artists: track.artists.map(artist => artist.name),
+            album: track.album.name,
+            releaseDate: track.album.release_date,
+            durationMs: track.duration_ms,
+            popularity: track.popularity,
+            previewUrl: track.preview_url,
+            isrc: track.external_ids?.isrc || null,
+            spotify_url: `https://open.spotify.com/track/${track.id}`
+          });
+        }
+      }
+
+      hasMore = trackData.next !== null;
+      offset += limit;
+    }
+
+    return {
+      id: playlist.id,
+      name: playlist.name,
+      description: playlist.description,
+      public: playlist.public,
+      collaborative: playlist.collaborative,
+      owner: {
+        id: playlist.owner.id,
+        display_name: playlist.owner.display_name
+      },
+      followers: playlist.followers.total,
+      images: playlist.images,
+      snapshot_id: playlist.snapshot_id,
+      spotify_url: playlist.external_urls.spotify,
+      total_tracks: playlist.tracks.total,
+      tracks: tracks,
+      exported_at: new Date().toISOString()
+    };
+  } catch (error) {
+    throw new Error(`Failed to get playlist details: ${error.response?.data?.error?.message || error.message}`);
+  }
+}
+
+// API endpoint for manual track search
+app.post('/api/search-track', async (req, res) => {
+  const { title, artist, album } = req.body;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+  
+  if (!title || !artist) {
+    return res.status(400).json({ error: 'Track title and artist are required' });
+  }
+
+  try {
+    // Try multiple search strategies
+    const searchQueries = [
+      `track:"${title}" artist:"${artist}"`,
+      `"${title}" "${artist}"`,
+      `${title} ${artist}`,
+      `track:"${title}"`
+    ];
+    
+    const tracks = [];
+    
+    for (const query of searchQueries) {
+      try {
+        const response = await axios.get('https://api.spotify.com/v1/search', {
+          params: {
+            q: query,
+            type: 'track',
+            limit: 10
+          },
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        
+        if (response.data.tracks.items.length > 0) {
+          for (const track of response.data.tracks.items) {
+            tracks.push({
+              id: track.id,
+              name: track.name,
+              artist: track.artists[0]?.name,
+              album: track.album?.name,
+              uri: track.uri,
+              popularity: track.popularity,
+              preview_url: track.preview_url
+            });
+          }
+        }
+      } catch (searchError) {
+        console.warn(`Search query failed: ${query}`, searchError.message);
+      }
+    }
+    
+    // Remove duplicates and sort by popularity
+    const uniqueTracks = tracks.filter((track, index, self) => 
+      index === self.findIndex(t => t.id === track.id)
+    ).sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+    
+    res.json({ tracks: uniqueTracks.slice(0, 10) });
+  } catch (error) {
+    console.error('Error searching for track:', error.message);
+    res.status(500).json({ error: 'Failed to search for track: ' + error.message });
+  }
+});
+
+// API endpoint to add a single track to a playlist
+app.post('/api/add-track-to-playlist', async (req, res) => {
+  const { playlistId, trackUri } = req.body;
+  
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated with Spotify' });
+  }
+  
+  if (!playlistId || !trackUri) {
+    return res.status(400).json({ error: 'Playlist ID and track URI are required' });
+  }
+
+  try {
+    const response = await axios.post(
+      `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+      {
+        uris: [trackUri]
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    res.json({ 
+      success: true, 
+      message: 'Track added to playlist successfully',
+      snapshot_id: response.data.snapshot_id 
+    });
+  } catch (error) {
+    console.error('Error adding track to playlist:', error.message);
+    res.status(500).json({ error: 'Failed to add track to playlist: ' + error.message });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
